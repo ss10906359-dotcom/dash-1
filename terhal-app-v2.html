@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ترحال — تطبيق الهاتف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --navy:#081B33; --navy-2:#0F2947; --purple:#4B2E83; --purple-2:#5E3D9E;
+    --gold:#D4AF37; --gold-light:#E8CD73;
+    --sand:#F7F3EA; --ink:#1B1730; --muted:#8A84A0; --line:#EDE6D4;
+    --emerald:#1C8B6A; --bad:#B5563F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Tajawal',sans-serif; color:var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%, rgba(75,46,131,.18), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(212,175,55,.16), transparent 45%),
+      #E7E1D2;
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;
+  }
+  h1,h2,h3{font-family:'Cairo',sans-serif;}
+
+  /* ---------- phone frame ---------- */
+  .phone{
+    width:390px; height:844px; background:#000; border-radius:52px; padding:14px;
+    box-shadow:0 40px 80px rgba(8,27,51,.35), 0 0 0 2px rgba(255,255,255,.06) inset;
+    position:relative;
+  }
+  .screen{
+    width:100%; height:100%; background:var(--sand); border-radius:38px; overflow:hidden; position:relative;
+    display:flex; flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px;
+    background:#000; border-radius:0 0 18px 18px; z-index:50;
+  }
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center; padding:16px 26px 6px;
+    font-size:13px; font-weight:700; color:var(--ink);
+  }
+
+  .app-content{ flex:1; overflow-y:auto; padding:0 18px 90px; position:relative; }
+  .app-content::-webkit-scrollbar{ display:none; }
+
+  /* bottom nav */
+  .tabbar{
+    position:absolute; bottom:0; left:0; right:0; height:82px; background:rgba(255,255,255,.85);
+    backdrop-filter:blur(16px); border-top:1px solid var(--line); display:flex; justify-content:space-around;
+    align-items:flex-start; padding-top:10px; z-index:40; border-radius:0 0 38px 38px;
+  }
+  .tab{ display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:9.5px; cursor:pointer; transition:.2s; }
+  .tab i{ font-size:17px; }
+  .tab.active{ color:var(--navy); font-weight:700; }
+  .tab.active i{ color:var(--gold); }
+
+  /* screens visibility */
+  .screenview{ display:none; }
+  .screenview.active{ display:block; animation:fadeIn .3s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- HOME ---------- */
+  .home-head{ padding-top:14px; display:flex; justify-content:space-between; align-items:center; }
+  .greet .hi{ font-size:11.5px; color:var(--muted); }
+  .greet .name{ font-family:'Cairo',sans-serif; font-weight:800; font-size:17px; margin-top:2px; }
+  .avatar-sm{ width:40px; height:40px; border-radius:12px; background:var(--navy); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; }
+
+  .search-bar{
+    margin-top:16px; display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
+    border-radius:16px; padding:12px 14px; font-size:12.5px; color:var(--muted); box-shadow:0 6px 16px rgba(8,27,51,.05);
+  }
+
+  .hero-banner{
+    margin-top:16px; border-radius:20px; padding:18px; background:linear-gradient(120deg, var(--navy), var(--purple));
+    color:#fff; position:relative; overflow:hidden;
+  }
+  .hero-banner::before{ content:""; position:absolute; inset:0; opacity:.15;
+    background-image: radial-gradient(circle, rgba(212,175,55,.9) 1px, transparent 1.4px); background-size:18px 18px; }
+  .hero-banner .row1{ display:flex; justify-content:space-between; align-items:center; position:relative; z-index:2; }
+  .hero-banner .idx{ text-align:center; }
+  .hero-banner .idx .ring{ width:52px; height:52px; position:relative; }
+  .hero-banner .idx .ring svg{ transform:rotate(-90deg); }
+  .hero-banner .idx .rv{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; }
+  .hero-banner .idx .lbl{ font-size:8.5px; color:rgba(255,255,255,.7); margin-top:4px; }
+  .hero-banner h4{ font-size:14.5px; font-weight:800; margin-top:12px; position:relative; z-index:2;}
+  .hero-banner p{ font-size:10.5px; color:rgba(255,255,255,.7); margin-top:4px; position:relative; z-index:2;}
+  .hero-banner .weather{ display:flex; gap:6px; align-items:center; font-size:11px; color:var(--gold-light); position:relative; z-index:2;}
+
+  .quick-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:18px; }
+  .qg-item{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .qg-item .ic{ width:52px; height:52px; border-radius:16px; background:#fff; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--navy); box-shadow:0 6px 14px rgba(8,27,51,.05); transition:.2s; }
+  .qg-item:active .ic{ transform:scale(.92); }
+  .qg-item span{ font-size:9.5px; color:var(--ink); text-align:center; }
+
+  .sec-head{ display:flex; justify-content:space-between; align-items:center; margin-top:22px; margin-bottom:10px; }
+  .sec-head h3{ font-size:14px; font-weight:800; }
+  .sec-head .more{ font-size:10.5px; color:var(--gold); font-weight:700; }
+
+  .dest-scroll{ display:flex; gap:12px; overflow-x:auto; padding-bottom:6px; margin:0 -18px; padding-right:18px; padding-left:18px; }
+  .dest-scroll::-webkit-scrollbar{ display:none; }
+  .dcard{ min-width:150px; height:190px; border-radius:18px; position:relative; overflow:hidden; flex:none; }
+  .dcard .overlay{ position:absolute; inset:0; background:linear-gradient(180deg, transparent 40%, rgba(8,27,51,.88)); }
+  .dcard .info{ position:absolute; bottom:10px; right:12px; left:12px; color:#fff; }
+  .dcard .info .n{ font-family:'Cairo',sans-serif; font-weight:800; font-size:13px; }
+  .dcard .info .t{ font-size:9px; color:var(--gold-light); margin-top:2px; }
+  .dcard .badge{ position:absolute; top:10px; left:10px; background:rgba(255,255,255,.9); color:var(--navy); font-size:8.5px; font-weight:700; padding:3px 8px; border-radius:10px; }
+
+  .promo-card{
+    margin-top:16px; border-radius:18px; padding:16px; background:linear-gradient(120deg, var(--gold), var(--gold-light));
+    color:var(--navy); display:flex; justify-content:space-between; align-items:center;
+  }
+  .promo-card .t1{ font-family:'Cairo',sans-serif; font-weight:800; font-size:13.5px; }
+  .promo-card .t2{ font-size:10px; margin-top:3px; }
+  .promo-card .pct{ font-family:'Cairo',sans-serif; font-weight:900; font-size:26px; }
+
+  /* ---------- EXPLORE ---------- */
+  .chip-row{ display:flex; gap:8px; overflow-x:auto; padding:14px 0 4px; margin:0 -18px; padding-right:18px; padding-left:18px; }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip{ padding:8px 16px; border-radius:20px; font-size:11px; white-space:nowrap; background:#fff; border:1px solid var(--line); color:var(--ink); cursor:pointer; transition:.2s; }
+  .chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  .explore-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+  .egrid-card{ border-radius:16px; overflow:hidden; position:relative; height:130px; }
+  .egrid-card .overlay{ position:absolute; inset:0; background:linear-gradient(180deg, transparent 35%, rgba(8,27,51,.85)); }
+  .egrid-card .info{ position:absolute; bottom:8px; right:10px; left:10px; color:#fff; font-size:11px; font-weight:700; font-family:'Cairo',sans-serif; }
+  .egrid-card .rt{ position:absolute; top:8px; right:8px; background:rgba(255,255,255,.92); color:var(--navy); font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px; }
+
+  /* ---------- BOOKINGS ---------- */
+  .booking-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px; display:flex; gap:12px; box-shadow:0 6px 16px rgba(8,27,51,.04); }
+  .booking-card .thumb{ width:56px; height:56px; border-radius:12px; background:linear-gradient(150deg,var(--purple),var(--navy)); flex:none; display:flex; align-items:center; justify-content:center; color:var(--gold-light); font-size:18px; }
+  .booking-card .info{ flex:1; }
+  .booking-card .info .n{ font-family:'Cairo',sans-serif; font-weight:800; font-size:13px; }
+  .booking-card .info .d{ font-size:10.5px; color:var(--muted); margin-top:3px; }
+  .booking-card .status{ font-size:9px; font-weight:700; padding:3px 9px; border-radius:10px; align-self:flex-start; }
+
+  /* ---------- WALLET ---------- */
+  .wallet-card{
+    margin-top:14px; border-radius:20px; padding:20px; background:linear-gradient(135deg, var(--navy), var(--purple));
+    color:#fff; position:relative; overflow:hidden;
+  }
+  .wallet-card::before{ content:""; position:absolute; inset:0; opacity:.12;
+    background-image: radial-gradient(circle, rgba(212,175,55,.9) 1px, transparent 1.4px); background-size:18px 18px; }
+  .wallet-card .lbl{ font-size:10.5px; color:rgba(255,255,255,.7); position:relative; z-index:2;}
+  .wallet-card .amt{ font-family:'Cairo',sans-serif; font-size:30px; font-weight:900; margin-top:6px; position:relative; z-index:2;}
+  .wallet-card .foot{ display:flex; justify-content:space-between; align-items:center; margin-top:18px; position:relative; z-index:2;}
+  .wallet-card .chip2{ font-size:9.5px; background:rgba(255,255,255,.15); padding:5px 10px; border-radius:10px; }
+
+  .wallet-actions{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  .wa-btn{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 6px; text-align:center; }
+  .wa-btn i{ font-size:16px; color:var(--navy); }
+  .wa-btn span{ display:block; font-size:9.5px; margin-top:6px; }
+
+  .tx-row{ display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px dashed var(--line); }
+  .tx-row .l{ display:flex; gap:10px; align-items:center; }
+  .tx-row .ic{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .tx-row .n{ font-size:11.5px; font-weight:700; }
+  .tx-row .d{ font-size:9px; color:var(--muted); margin-top:2px; }
+  .tx-row .amt{ font-family:'Cairo',sans-serif; font-weight:800; font-size:12px; }
+
+  /* ---------- PROFILE ---------- */
+  .profile-head{ display:flex; flex-direction:column; align-items:center; padding-top:20px; }
+  .profile-head .av{ width:76px; height:76px; border-radius:24px; background:linear-gradient(150deg,var(--gold),var(--gold-light)); display:flex; align-items:center; justify-content:center; font-size:26px; color:var(--navy); font-weight:800; }
+  .profile-head .n{ font-family:'Cairo',sans-serif; font-weight:800; font-size:16px; margin-top:10px; }
+  .profile-head .tier{ font-size:10px; color:var(--gold); font-weight:700; margin-top:2px; background:rgba(212,175,55,.12); padding:3px 10px; border-radius:10px; }
+
+  .profile-stats{ display:flex; justify-content:space-around; margin-top:18px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 0; }
+  .profile-stats .s{ text-align:center; }
+  .profile-stats .s b{ display:block; font-family:'Cairo',sans-serif; font-size:15px; }
+  .profile-stats .s span{ font-size:9.5px; color:var(--muted); }
+
+  .menu-row{ display:flex; justify-content:space-between; align-items:center; padding:13px 4px; border-bottom:1px solid var(--line); }
+  .menu-row .l{ display:flex; align-items:center; gap:10px; font-size:12px; }
+  .menu-row .l i{ width:20px; text-align:center; color:var(--navy); }
+  .switch{ position:relative; width:38px; height:21px; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .slider-tgl{ position:absolute; cursor:pointer; inset:0; background:var(--line); border-radius:22px; transition:.25s; }
+  .slider-tgl::before{ content:""; position:absolute; width:15px; height:15px; right:3px; top:3px; background:#fff; border-radius:50%; transition:.25s; }
+  .switch input:checked + .slider-tgl{ background:var(--emerald); }
+  .switch input:checked + .slider-tgl::before{ transform:translateX(-17px); }
+
+  /* section title outside phone */
+  .cap{ text-align:center; margin-top:20px; font-size:12px; color:var(--muted); }
+  .cap b{ color:var(--ink); }
+
+  /* ---------- SOS floating button ---------- */
+  .sos-btn{
+    position:absolute; left:16px; bottom:100px; z-index:45; width:50px; height:50px; border-radius:50%;
+    background:linear-gradient(150deg,#D9503A,#B5563F); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; box-shadow:0 10px 22px rgba(181,86,63,.45); cursor:pointer;
+    animation:sosPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes sosPulse{ 0%{box-shadow:0 0 0 0 rgba(181,86,63,.5);} 70%{box-shadow:0 0 0 12px rgba(181,86,63,0);} 100%{box-shadow:0 0 0 0 rgba(181,86,63,0);} }
+  .sos-modal{
+    position:absolute; inset:0; background:rgba(8,11,26,.55); z-index:60; display:none;
+    align-items:flex-end; border-radius:38px; overflow:hidden;
+  }
+  .sos-modal.open{ display:flex; }
+  .sos-sheet{ width:100%; background:var(--sand); border-radius:24px 24px 0 0; padding:22px 20px 26px; animation:sheetUp .3s ease; }
+  @keyframes sheetUp{ from{ transform:translateY(30px); opacity:0;} to{ transform:translateY(0); opacity:1;} }
+  .sos-sheet h4{ font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px; color:var(--bad); }
+  .sos-sheet p{ font-size:11.5px; color:var(--muted); margin-top:6px; }
+  .sos-opt{ display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-top:12px; }
+  .sos-opt .ic{ width:38px; height:38px; border-radius:11px; background:#FBEAE5; color:var(--bad); display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .sos-opt .t{ font-size:12px; font-weight:700; }
+  .sos-opt .s{ font-size:9.5px; color:var(--muted); margin-top:2px; }
+  .sos-close{ text-align:center; margin-top:14px; font-size:11.5px; color:var(--muted); }
+
+  /* ---------- accessibility large-text mode ---------- */
+  .screen.a11y .app-content{ font-size:113%; }
+  .screen.a11y .qg-item span{ font-size:11.5px; }
+  .screen.a11y .tab{ font-size:11px; }
+  .screen.a11y .booking-card .info .n, .screen.a11y .tx-row .n{ font-size:14.5px; }
+
+  /* ---------- verified + pricing tags ---------- */
+  .verified-tag{ display:inline-flex; align-items:center; gap:4px; font-size:8.5px; font-weight:700; background:rgba(28,139,106,.15); color:var(--emerald); padding:2px 7px; border-radius:8px; }
+  .price-tag{ position:absolute; bottom:8px; left:8px; background:rgba(212,175,55,.95); color:var(--navy); font-size:8px; font-weight:700; padding:3px 7px; border-radius:8px; display:flex; align-items:center; gap:3px; }
+  .carbon-tag{ font-size:9px; color:var(--emerald); display:flex; align-items:center; gap:4px; margin-top:5px; }
+
+  /* ---------- rewards / gamification ---------- */
+  .tier-card{ margin-top:14px; border-radius:20px; padding:18px; background:linear-gradient(135deg,#B98A2E,var(--gold)); color:var(--navy); position:relative; overflow:hidden; }
+  .tier-card .tt{ font-family:'Cairo',sans-serif; font-weight:900; font-size:15px; }
+  .tier-card .sub{ font-size:10.5px; margin-top:3px; opacity:.85; }
+  .tier-bar{ height:8px; background:rgba(8,27,51,.15); border-radius:8px; margin-top:12px; overflow:hidden; }
+  .tier-bar .fill{ height:100%; background:var(--navy); border-radius:8px; width:64%; }
+  .tier-card .foot{ display:flex; justify-content:space-between; font-size:9.5px; margin-top:6px; opacity:.85; }
+
+  .badge-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:14px; }
+  .badge-item{ display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; }
+  .badge-item .bic{ width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .badge-item.earned .bic{ background:linear-gradient(150deg,var(--gold),var(--gold-light)); color:var(--navy); }
+  .badge-item.locked .bic{ background:#EDEAE0; color:#C8C2AE; }
+  .badge-item span{ font-size:8.5px; color:var(--ink); }
+
+  .reward-row{ display:flex; justify-content:space-between; align-items:center; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-top:10px; }
+  .reward-row .l{ display:flex; gap:10px; align-items:center; }
+  .reward-row .ic{ width:36px; height:36px; border-radius:11px; background:#EFE9FB; color:var(--purple); display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .reward-row .n{ font-size:12px; font-weight:700; }
+  .reward-row .p{ font-size:9.5px; color:var(--muted); margin-top:2px; }
+  .redeem-btn{ font-size:10px; font-weight:700; background:var(--navy); color:#fff; padding:6px 12px; border-radius:10px; }
+
+  /* ---------- itinerary builder ---------- */
+  .day-tabs{ display:flex; gap:8px; overflow-x:auto; margin-top:14px; }
+  .day-chip{ padding:8px 16px; border-radius:14px; background:#fff; border:1px solid var(--line); font-size:11px; white-space:nowrap; cursor:pointer; }
+  .day-chip.active{ background:var(--purple); color:#fff; border-color:var(--purple); }
+  .itin-item{ display:flex; gap:12px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:10px; align-items:center; }
+  .itin-item .time{ font-family:'Cairo',sans-serif; font-weight:800; font-size:12px; color:var(--purple); min-width:44px; }
+  .itin-item .ic{ width:38px; height:38px; border-radius:11px; background:var(--sand); display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--navy); }
+  .itin-item .n{ font-size:12px; font-weight:700; }
+  .itin-item .d{ font-size:9.5px; color:var(--muted); margin-top:2px; }
+  .add-activity{ display:flex; align-items:center; justify-content:center; gap:8px; border:1.5px dashed var(--line); border-radius:14px; padding:13px; margin-top:12px; color:var(--muted); font-size:11.5px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div>
+<div class="phone">
+  <div class="screen">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></span>
+    </div>
+
+    <!-- ============ HOME ============ -->
+    <div class="screenview active" id="scr-home">
+      <div class="app-content">
+        <div class="home-head">
+          <div class="greet"><div class="hi">مساء الخير 👋</div><div class="name">سهام الشيبانية</div></div>
+          <div class="avatar-sm">س.ع</div>
+        </div>
+
+        <div class="search-bar"><i class="fa-solid fa-magnifying-glass"></i> إلى أين تودين الذهاب؟</div>
+
+        <div class="hero-banner">
+          <div class="row1">
+            <div>
+              <h4>مرحبًا بك في عُمان</h4>
+              <div class="weather"><i class="fa-solid fa-cloud-sun"></i> 31° مسقط — صافٍ</div>
+            </div>
+            <div class="idx">
+              <div class="ring">
+                <svg width="52" height="52"><circle cx="26" cy="26" r="22" stroke="rgba(255,255,255,.2)" stroke-width="5" fill="none"/><circle cx="26" cy="26" r="22" stroke="#D4AF37" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="14" /></svg>
+                <div class="rv">94%</div>
+              </div>
+              <div class="lbl">المؤشر السياحي</div>
+            </div>
+          </div>
+          <p>خطتك القادمة تبدأ من هنا — اكتشفي وجهات وعروض مختارة لك اليوم.</p>
+        </div>
+
+        <div class="quick-grid">
+          <div class="qg-item" onclick="go('scr-explore')"><div class="ic"><i class="fa-solid fa-calendar-check"></i></div><span>احجز</span></div>
+          <div class="qg-item" onclick="go('scr-explore')"><div class="ic"><i class="fa-solid fa-compass"></i></div><span>استكشف</span></div>
+          <div class="qg-item" onclick="go('scr-rewards')"><div class="ic"><i class="fa-solid fa-tag"></i></div><span>خصمك</span></div>
+          <div class="qg-item" onclick="go('scr-rewards')"><div class="ic"><i class="fa-solid fa-gift"></i></div><span>العروض</span></div>
+          <div class="qg-item" onclick="go('scr-itinerary')"><div class="ic"><i class="fa-solid fa-map"></i></div><span>خطة رحلتي</span></div>
+          <div class="qg-item"><div class="ic"><i class="fa-solid fa-hands-bubbles"></i></div><span>متجر الحرفيين</span></div>
+          <div class="qg-item" onclick="go('scr-wallet')"><div class="ic"><i class="fa-solid fa-wallet"></i></div><span>المحفظة</span></div>
+          <div class="qg-item" onclick="go('scr-wallet')"><div class="ic"><i class="fa-solid fa-shield-halved"></i></div><span>الدفع الآمن</span></div>
+        </div>
+
+        <div class="sec-head"><h3>وجهات مقترحة لك</h3><span class="more" onclick="go('scr-explore')">عرض الكل</span></div>
+        <div class="dest-scroll">
+          <div class="dcard" style="background:linear-gradient(160deg,#2E4C3E,#0F2947);">
+            <span class="badge">الأكثر زيارة</span>
+            <div class="overlay"></div>
+            <span class="price-tag"><i class="fa-solid fa-bolt"></i> السعر يرتفع خلال 6 س</span>
+            <div class="info"><div class="n">الجبل الأخضر</div><div class="t">مرتفعات ومزارع تراثية</div></div>
+          </div>
+          <div class="dcard" style="background:linear-gradient(160deg,#8A6A2E,#4B2E83);">
+            <span class="badge">تراث</span>
+            <div class="overlay"></div>
+            <div class="info"><div class="n">حصن نزوى</div><div class="t">إرث تاريخي عريق</div></div>
+          </div>
+          <div class="dcard" style="background:linear-gradient(160deg,#0F6E8C,#081B33);">
+            <span class="badge">موسم الخريف</span>
+            <div class="overlay"></div>
+            <div class="info"><div class="n">شواطئ صلالة</div><div class="t">خضرة وشلالات</div></div>
+          </div>
+        </div>
+
+        <div class="promo-card">
+          <div><div class="t1">عرض نهاية الأسبوع</div><div class="t2">على حجوزات الفنادق في ظفار</div></div>
+          <div class="pct">25%</div>
+        </div>
+
+        <div class="sec-head"><h3>من سوق الحرفيين</h3><span class="more">عرض الكل</span></div>
+        <div class="dest-scroll">
+          <div class="dcard" style="height:150px; min-width:130px; background:linear-gradient(160deg,#4B2E83,#081B33);">
+            <div class="overlay"></div>
+            <div class="info"><div class="n">فخار عُماني</div><div class="t">من نزوى — 12 ر.ع</div></div>
+          </div>
+          <div class="dcard" style="height:150px; min-width:130px; background:linear-gradient(160deg,#8A6A2E,#0F2947);">
+            <div class="overlay"></div>
+            <div class="info"><div class="n">بخور ظفاري</div><div class="t">من صلالة — 8 ر.ع</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EXPLORE ============ -->
+    <div class="screenview" id="scr-explore">
+      <div class="app-content">
+        <div class="home-head" style="padding-top:14px;"><h3 style="font-size:17px; font-weight:800;">استكشف عُمان</h3></div>
+        <div class="search-bar" style="margin-top:12px;"><i class="fa-solid fa-magnifying-glass"></i> ابحثي عن وجهة أو نشاط</div>
+        <div class="chip-row">
+          <div class="chip active">الكل</div>
+          <div class="chip">مسقط</div>
+          <div class="chip">الداخلية</div>
+          <div class="chip">ظفار</div>
+          <div class="chip">مسندم</div>
+          <div class="chip">الشرقية</div>
+        </div>
+        <div class="explore-grid">
+          <div class="egrid-card" style="background:linear-gradient(160deg,#2E4C3E,#0F2947);"><span class="rt">4.8 ⭐</span><div class="overlay"></div><div class="info">الجبل الأخضر<br><span class="verified-tag"><i class="fa-solid fa-circle-check"></i> موثّق</span></div></div>
+          <div class="egrid-card" style="background:linear-gradient(160deg,#8A6A2E,#4B2E83);"><span class="rt">4.6 ⭐</span><div class="overlay"></div><div class="info">حصن نزوى<br><span class="verified-tag"><i class="fa-solid fa-circle-check"></i> موثّق</span></div></div>
+          <div class="egrid-card" style="background:linear-gradient(160deg,#0F6E8C,#081B33);"><span class="rt">4.7 ⭐</span><div class="overlay"></div><div class="info">شواطئ صلالة</div></div>
+          <div class="egrid-card" style="background:linear-gradient(160deg,#4B2E83,#081B33);"><span class="rt">4.5 ⭐</span><div class="overlay"></div><div class="info">سوق مطرح</div></div>
+          <div class="egrid-card" style="background:linear-gradient(160deg,#1C8B6A,#0F2947);"><span class="rt">4.9 ⭐</span><div class="overlay"></div><div class="info">وادي شاب<br><span class="verified-tag"><i class="fa-solid fa-circle-check"></i> موثّق</span></div></div>
+          <div class="egrid-card" style="background:linear-gradient(160deg,#B5563F,#4B2E83);"><span class="rt">4.4 ⭐</span><div class="overlay"></div><div class="info">مسندم</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ BOOKINGS ============ -->
+    <div class="screenview" id="scr-bookings">
+      <div class="app-content">
+        <div class="home-head" style="padding-top:14px;"><h3 style="font-size:17px; font-weight:800;">حجوزاتي</h3></div>
+        <div class="chip-row">
+          <div class="chip active">القادمة</div>
+          <div class="chip">السابقة</div>
+          <div class="chip">ملغاة</div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="booking-card">
+            <div class="thumb"><i class="fa-solid fa-hotel"></i></div>
+            <div class="info">
+              <div class="n">شاطئ مسقط ريزورت</div>
+              <div class="d"><i class="fa-regular fa-calendar"></i> 14–16 يوليو · ليلتان</div>
+              <div class="status" style="background:#E4F3ED; color:var(--emerald); margin-top:6px;">مؤكد</div>
+              <div class="carbon-tag"><i class="fa-solid fa-leaf"></i> بصمة كربونية منخفضة</div>
+            </div>
+          </div>
+          <div class="booking-card">
+            <div class="thumb"><i class="fa-solid fa-ticket"></i></div>
+            <div class="info">
+              <div class="n">مهرجان صلالة السياحي</div>
+              <div class="d"><i class="fa-regular fa-calendar"></i> 20 يوليو · تذكرتان</div>
+              <div class="status" style="background:#FBF0DC; color:#A97E2F; margin-top:6px;">قيد المعالجة</div>
+            </div>
+          </div>
+          <div class="booking-card">
+            <div class="thumb"><i class="fa-solid fa-person-hiking"></i></div>
+            <div class="info">
+              <div class="n">جولة وادي شاب المرشدة</div>
+              <div class="d"><i class="fa-regular fa-calendar"></i> 28 يوليو · 4 أشخاص</div>
+              <div class="status" style="background:#E4F3ED; color:var(--emerald); margin-top:6px;">مؤكد</div>
+              <div class="carbon-tag"><i class="fa-solid fa-leaf"></i> مرشد محلي معتمد</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ WALLET ============ -->
+    <div class="screenview" id="scr-wallet">
+      <div class="app-content">
+        <div class="home-head" style="padding-top:14px;"><h3 style="font-size:17px; font-weight:800;">المحفظة</h3></div>
+        <div class="wallet-card">
+          <div class="lbl">الرصيد المتاح</div>
+          <div class="amt">248.500 ر.ع</div>
+          <div class="foot">
+            <span class="chip2"><i class="fa-solid fa-shield-halved"></i> Open Banking متصل</span>
+            <span class="chip2">•••• 4821</span>
+          </div>
+        </div>
+        <div class="wallet-actions">
+          <div class="wa-btn"><i class="fa-solid fa-plus"></i><span>تعبئة</span></div>
+          <div class="wa-btn"><i class="fa-solid fa-arrow-up-from-bracket"></i><span>تحويل</span></div>
+          <div class="wa-btn"><i class="fa-solid fa-qrcode"></i><span>دفع QR</span></div>
+        </div>
+        <div class="sec-head"><h3 style="font-size:13px;">آخر المعاملات</h3></div>
+        <div class="tx-row"><div class="l"><div class="ic" style="background:#E4F3ED; color:var(--emerald);"><i class="fa-solid fa-hotel"></i></div><div><div class="n">حجز فندقي</div><div class="d">اليوم، 10:20 ص</div></div></div><div class="amt">-68.000</div></div>
+        <div class="tx-row"><div class="l"><div class="ic" style="background:#EFE9FB; color:var(--purple);"><i class="fa-solid fa-hands-bubbles"></i></div><div><div class="n">سوق الحرفيين</div><div class="d">أمس، 4:15 م</div></div></div><div class="amt">-12.000</div></div>
+        <div class="tx-row"><div class="l"><div class="ic" style="background:#FBF0DC; color:#A97E2F;"><i class="fa-solid fa-arrow-down"></i></div><div><div class="n">تعبئة رصيد</div><div class="d">10 يوليو</div></div></div><div class="amt" style="color:var(--emerald);">+200.000</div></div>
+      </div>
+    </div>
+
+    <!-- ============ PROFILE ============ -->
+    <div class="screenview" id="scr-profile">
+      <div class="app-content">
+        <div class="profile-head">
+          <div class="av">س.ع</div>
+          <div class="n">سهام عمر الشيبانية</div>
+          <div class="tier">⭐ عضوة ذهبية</div>
+        </div>
+        <div class="profile-stats">
+          <div class="s"><b>14</b><span>رحلة</span></div>
+          <div class="s"><b>3,240</b><span>نقطة</span></div>
+          <div class="s"><b>6</b><span>مفضلة</span></div>
+        </div>
+
+        <div class="sec-head"><h3 style="font-size:13px;">شاراتي</h3><span class="more" onclick="go('scr-rewards')">عرض الكل</span></div>
+        <div class="badge-grid">
+          <div class="badge-item earned"><div class="bic"><i class="fa-solid fa-mountain"></i></div><span>مستكشفة الجبال</span></div>
+          <div class="badge-item earned"><div class="bic"><i class="fa-solid fa-fort-awesome"></i></div><span>زائرة الحصون</span></div>
+          <div class="badge-item locked"><div class="bic"><i class="fa-solid fa-water"></i></div><span>محبة الشواطئ</span></div>
+          <div class="badge-item locked"><div class="bic"><i class="fa-solid fa-hands-bubbles"></i></div><span>داعمة الحرفيين</span></div>
+        </div>
+
+        <div class="sec-head"><h3 style="font-size:13px;">الحساب</h3></div>
+        <div class="menu-row"><div class="l"><i class="fa-solid fa-user"></i> البيانات الشخصية</div><i class="fa-solid fa-chevron-left" style="color:var(--muted); font-size:11px;"></i></div>
+        <div class="menu-row"><div class="l"><i class="fa-solid fa-heart"></i> المفضلة</div><i class="fa-solid fa-chevron-left" style="color:var(--muted); font-size:11px;"></i></div>
+        <div class="menu-row"><div class="l"><i class="fa-solid fa-language"></i> اللغة</div><span style="font-size:11px; color:var(--muted);">العربية</span></div>
+        <div class="sec-head"><h3 style="font-size:13px;">التفضيلات</h3></div>
+        <div class="menu-row"><div class="l"><i class="fa-solid fa-moon"></i> الوضع الداكن</div><label class="switch"><input type="checkbox"><span class="slider-tgl"></span></label></div>
+        <div class="menu-row"><div class="l"><i class="fa-solid fa-bell"></i> الإشعارات</div><label class="switch"><input type="checkbox" checked><span class="slider-tgl"></span></label></div>
+        <div class="menu-row"><div class="l"><i class="fa-solid fa-text-height"></i> نص أكبر (سهولة الوصول)</div><label class="switch"><input type="checkbox" id="a11yToggle"><span class="slider-tgl"></span></label></div>
+        <div class="menu-row"><div class="l"><i class="fa-solid fa-wifi"></i> وضع بلا إنترنت</div><label class="switch"><input type="checkbox"><span class="slider-tgl"></span></label></div>
+        <div class="menu-row" style="border-bottom:none;"><div class="l" style="color:var(--bad);"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</div></div>
+      </div>
+    </div>
+
+    <!-- ============ REWARDS ============ -->
+    <div class="screenview" id="scr-rewards">
+      <div class="app-content">
+        <div class="home-head" style="padding-top:14px;"><h3 style="font-size:17px; font-weight:800;">المكافآت والتحديات</h3></div>
+        <div class="tier-card">
+          <div class="tt">عضوة ذهبية ⭐</div>
+          <div class="sub">3,240 نقطة — 1,760 نقطة للمستوى البلاتيني</div>
+          <div class="tier-bar"><div class="fill"></div></div>
+          <div class="foot"><span>ذهبية</span><span>بلاتينية</span></div>
+        </div>
+
+        <div class="sec-head"><h3 style="font-size:13px;">تحدياتي</h3></div>
+        <div class="badge-grid">
+          <div class="badge-item earned"><div class="bic"><i class="fa-solid fa-mountain"></i></div><span>مستكشفة الجبال</span></div>
+          <div class="badge-item earned"><div class="bic"><i class="fa-solid fa-fort-awesome"></i></div><span>زائرة الحصون</span></div>
+          <div class="badge-item earned"><div class="bic"><i class="fa-solid fa-star"></i></div><span>5 تقييمات</span></div>
+          <div class="badge-item locked"><div class="bic"><i class="fa-solid fa-water"></i></div><span>محبة الشواطئ</span></div>
+          <div class="badge-item locked"><div class="bic"><i class="fa-solid fa-hands-bubbles"></i></div><span>داعمة الحرفيين</span></div>
+          <div class="badge-item locked"><div class="bic"><i class="fa-solid fa-campground"></i></div><span>مغامِرة الصحراء</span></div>
+          <div class="badge-item locked"><div class="bic"><i class="fa-solid fa-users"></i></div><span>سفيرة ترحال</span></div>
+          <div class="badge-item locked"><div class="bic"><i class="fa-solid fa-leaf"></i></div><span>سائحة مستدامة</span></div>
+        </div>
+
+        <div class="sec-head"><h3 style="font-size:13px;">استبدلي نقاطك</h3></div>
+        <div class="reward-row"><div class="l"><div class="ic"><i class="fa-solid fa-hotel"></i></div><div><div class="n">خصم 20% على الفنادق</div><div class="p">1,200 نقطة</div></div></div><div class="redeem-btn">استبدال</div></div>
+        <div class="reward-row"><div class="l"><div class="ic"><i class="fa-solid fa-hands-bubbles"></i></div><div><div class="n">قسيمة سوق الحرفيين</div><div class="p">800 نقطة</div></div></div><div class="redeem-btn">استبدال</div></div>
+        <div class="reward-row"><div class="l"><div class="ic"><i class="fa-solid fa-ticket"></i></div><div><div class="n">تذكرة فعالية مجانية</div><div class="p">2,000 نقطة</div></div></div><div class="redeem-btn">استبدال</div></div>
+      </div>
+    </div>
+
+    <!-- ============ ITINERARY ============ -->
+    <div class="screenview" id="scr-itinerary">
+      <div class="app-content">
+        <div class="home-head" style="padding-top:14px;"><h3 style="font-size:17px; font-weight:800;">خطة رحلتي</h3></div>
+        <div class="search-bar" style="margin-top:12px;"><i class="fa-solid fa-robot"></i> اقترحي علي خطة ذكية لـ 3 أيام</div>
+        <div class="day-tabs" id="dayTabs">
+          <div class="day-chip active" data-day="1">اليوم 1</div>
+          <div class="day-chip" data-day="2">اليوم 2</div>
+          <div class="day-chip" data-day="3">اليوم 3</div>
+        </div>
+
+        <div id="dayContent-1">
+          <div class="itin-item"><div class="time">8:00</div><div class="ic"><i class="fa-solid fa-mug-hot"></i></div><div><div class="n">إفطار بمقهى تراثي</div><div class="d">مسقط القديمة</div></div></div>
+          <div class="itin-item"><div class="time">10:00</div><div class="ic"><i class="fa-solid fa-fort-awesome"></i></div><div><div class="n">جولة في حصن نزوى</div><div class="d">مدة الزيارة: ساعتان</div></div></div>
+          <div class="itin-item"><div class="time">13:00</div><div class="ic"><i class="fa-solid fa-utensils"></i></div><div><div class="n">غداء عُماني تقليدي</div><div class="d">سوق نزوى</div></div></div>
+        </div>
+        <div id="dayContent-2" style="display:none;">
+          <div class="itin-item"><div class="time">7:30</div><div class="ic"><i class="fa-solid fa-mountain"></i></div><div><div class="n">تسلق الجبل الأخضر</div><div class="d">مرشد محلي معتمد</div></div></div>
+          <div class="itin-item"><div class="time">14:00</div><div class="ic"><i class="fa-solid fa-seedling"></i></div><div><div class="n">زيارة مزارع الورد</div><div class="d">مدة الزيارة: ساعة</div></div></div>
+        </div>
+        <div id="dayContent-3" style="display:none;">
+          <div class="itin-item"><div class="time">9:00</div><div class="ic"><i class="fa-solid fa-water"></i></div><div><div class="n">جولة وادي شاب</div><div class="d">سباحة ومغامرة</div></div></div>
+          <div class="itin-item"><div class="time">17:00</div><div class="ic"><i class="fa-solid fa-hands-bubbles"></i></div><div><div class="n">تسوق من سوق الحرفيين</div><div class="d">هدايا تذكارية</div></div></div>
+        </div>
+
+        <div class="add-activity"><i class="fa-solid fa-plus"></i> إضافة نشاط جديد لهذا اليوم</div>
+      </div>
+    </div>
+
+    <!-- SOS FLOATING BUTTON -->
+    <div class="sos-btn" id="sosBtn"><span>SOS</span></div>
+    <div class="sos-modal" id="sosModal">
+      <div class="sos-sheet">
+        <h4><i class="fa-solid fa-triangle-exclamation"></i> مساعدة طارئة</h4>
+        <p>سيتم مشاركة موقعك الحالي مع الجهة المختارة فورًا.</p>
+        <div class="sos-opt"><div class="ic"><i class="fa-solid fa-user-shield"></i></div><div><div class="t">الشرطة السياحية</div><div class="s">استجابة خلال دقائق</div></div></div>
+        <div class="sos-opt"><div class="ic"><i class="fa-solid fa-truck-medical"></i></div><div><div class="t">الإسعاف</div><div class="s">حالات طبية طارئة</div></div></div>
+        <div class="sos-opt"><div class="ic"><i class="fa-solid fa-headset"></i></div><div><div class="t">دعم ترحال</div><div class="s">مساعدة فورية من فريقنا</div></div></div>
+        <div class="sos-close" onclick="document.getElementById('sosModal').classList.remove('open')">إلغاء</div>
+      </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <div class="tabbar">
+      <div class="tab active" data-scr="scr-home" onclick="go('scr-home', this)"><i class="fa-solid fa-house"></i>الرئيسية</div>
+      <div class="tab" data-scr="scr-explore" onclick="go('scr-explore', this)"><i class="fa-solid fa-compass"></i>استكشف</div>
+      <div class="tab" data-scr="scr-bookings" onclick="go('scr-bookings', this)"><i class="fa-solid fa-ticket"></i>حجوزاتي</div>
+      <div class="tab" data-scr="scr-wallet" onclick="go('scr-wallet', this)"><i class="fa-solid fa-wallet"></i>المحفظة</div>
+      <div class="tab" data-scr="scr-profile" onclick="go('scr-profile', this)"><i class="fa-solid fa-user"></i>حسابي</div>
+    </div>
+  </div>
+</div>
+<div class="cap">نموذج أولي تفاعلي لتطبيق <b>ترحال</b> — اضغطي على شريط التبويب أسفل الشاشة للتنقل</div>
+</div>
+
+<script>
+  function go(id, tabEl){
+    document.querySelectorAll('.screenview').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    const tab = tabEl || document.querySelector('.tab[data-scr="'+id+'"]');
+    if (tab) tab.classList.add('active');
+    document.querySelector('#'+id+' .app-content')?.scrollTo(0,0);
+  }
+
+  // chip toggles (explore + bookings filters, visual only)
+  document.querySelectorAll('.chip-row').forEach(row => {
+    row.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  // SOS emergency button
+  document.getElementById('sosBtn').addEventListener('click', () => {
+    document.getElementById('sosModal').classList.add('open');
+  });
+
+  // accessibility: real large-text mode toggle
+  document.getElementById('a11yToggle').addEventListener('change', (e) => {
+    document.querySelector('.screen').classList.toggle('a11y', e.target.checked);
+  });
+
+  // itinerary day tabs
+  document.getElementById('dayTabs').addEventListener('click', (e) => {
+    const chip = e.target.closest('.day-chip');
+    if (!chip) return;
+    document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    const day = chip.dataset.day;
+    ['1','2','3'].forEach(d => {
+      const el = document.getElementById('dayContent-'+d);
+      if (el) el.style.display = (d === day) ? '' : 'none';
+    });
+  });
+</script>
+</body>
+</html>
