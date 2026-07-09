@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم ترحال — الإصدار الاحترافي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --navy:#1E1548; --navy-2:#2E2160; --navy-3:#3B2C7A;
+    --gold:#C9A15A; --gold-light:#E9CE93;
+    --cream:#F8F3E8; --ink:#241B45; --muted:#8E86A3; --line:#E7DFCB;
+    --good:#4C8B6B; --warn:#C9A15A; --bad:#B5563F;
+    --glass:rgba(255,255,255,.72);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Tajawal',sans-serif; color:var(--ink); min-height:100vh;
+    background:
+      radial-gradient(circle at 8% 12%, rgba(59,44,122,.14), transparent 40%),
+      radial-gradient(circle at 92% 18%, rgba(201,161,90,.16), transparent 38%),
+      radial-gradient(circle at 30% 90%, rgba(30,21,72,.10), transparent 42%),
+      radial-gradient(circle at 85% 85%, rgba(233,206,147,.18), transparent 40%),
+      var(--cream);
+    background-attachment:fixed;
+  }
+  h1,h2,h3{font-family:'Cairo',sans-serif;}
+
+  /* faint heritage watermarks */
+  .heritage-bg{position:fixed; inset:0; z-index:0; opacity:.04; pointer-events:none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><path d='M20 380 L20 260 Q60 200 110 195 Q160 200 160 260 L160 380 M180 380 L180 300 L200 300 L200 380 M220 380 L220 320 Q240 280 260 320 L260 380' stroke='%231E1548' stroke-width='4' fill='none'/></svg>");
+    background-repeat:repeat; background-size:400px;
+  }
+
+  .shell{display:grid; grid-template-columns:1fr 250px; min-height:100vh; position:relative; z-index:1;}
+  @media(max-width:960px){.shell{grid-template-columns:1fr;}}
+
+  /* ---------- sidebar ---------- */
+  .sidebar{background:linear-gradient(180deg,var(--navy),var(--navy-2)); color:#fff; padding:26px 20px; position:relative; overflow:hidden;}
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+  .arch{width:32px; height:32px; border-radius:50% 50% 4px 4px; background:var(--gold); display:flex; align-items:center; justify-content:center; color:var(--navy); font-weight:800;}
+  .brand-text{font-family:'Cairo',sans-serif; font-weight:800; font-size:19px;}
+  .brand-sub{font-size:9.5px; letter-spacing:3px; color:var(--gold-light); font-family:'Cairo',sans-serif;}
+  .tagline{font-size:10.5px; color:rgba(255,255,255,.55); margin:12px 0 22px; line-height:1.7;}
+  nav{display:flex; flex-direction:column; gap:3px;}
+  .navitem{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; font-size:13px; color:rgba(255,255,255,.75); cursor:pointer; transition:.15s;}
+  .navitem i{width:16px; text-align:center; color:rgba(255,255,255,.55);}
+  .navitem.active{background:rgba(255,255,255,.1); color:#fff; font-weight:700;}
+  .navitem.active i{color:var(--gold-light);}
+  .navitem:hover{background:rgba(255,255,255,.06);}
+  .side-foot{position:absolute; bottom:22px; right:20px; left:20px; font-size:10px; color:rgba(255,255,255,.4); border-top:1px solid rgba(255,255,255,.12); padding-top:12px; line-height:1.7;}
+
+  /* ---------- main ---------- */
+  main{padding:0 30px 44px;}
+
+  /* top bar */
+  .topbar{
+    display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:14px 4px; margin-bottom:18px; border-bottom:1px solid var(--line);
+  }
+  .topbar .left{display:flex; gap:16px; align-items:center; font-size:12px; color:var(--muted); flex-wrap:wrap;}
+  .topbar .left .item{display:flex; align-items:center; gap:6px;}
+  .topbar select{
+    border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px 10px; font-size:12px; color:var(--ink); font-family:'Tajawal',sans-serif;
+  }
+  .topbar .right{display:flex; align-items:center; gap:12px;}
+  .icon-btn{
+    width:34px; height:34px; border-radius:10px; background:#fff; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; color:var(--navy); cursor:pointer; position:relative;
+  }
+  .icon-btn .badge{position:absolute; top:-3px; left:-3px; width:8px; height:8px; border-radius:50%; background:var(--bad);}
+  .avatar{width:34px; height:34px; border-radius:10px; background:var(--navy); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700;}
+
+  .pagehead{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:22px; flex-wrap:wrap; gap:12px;}
+  .pagehead h1{font-size:23px; font-weight:800;}
+  .pagehead .date{font-size:12px; color:var(--muted); margin-top:4px;}
+  .range{display:flex; gap:6px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:4px;}
+  .range span{padding:6px 14px; font-size:12px; border-radius:7px; color:var(--muted); cursor:pointer;}
+  .range span.on{background:var(--navy); color:#fff; font-weight:700;}
+
+  /* glass card base */
+  .glass{
+    background:var(--glass); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.6); border-radius:16px;
+    transition:.3s;
+  }
+  .glass:hover{transform:translateY(-6px); box-shadow:0 16px 34px rgba(30,21,72,.16);}
+
+  /* KPI grid */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:14px;}
+  .kpis.sub{grid-template-columns:repeat(6,1fr);}
+  @media(max-width:960px){.kpis{grid-template-columns:repeat(2,1fr);} .kpis.sub{grid-template-columns:repeat(3,1fr);}}
+  .kpi{padding:16px 18px;}
+  .kpi .icon{width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; margin-bottom:12px;}
+  .kpi .label{font-size:11.5px; color:var(--muted); margin-bottom:3px;}
+  .kpi .value{font-family:'Cairo',sans-serif; font-size:22px; font-weight:800;}
+  .kpi .delta{font-size:11px; margin-top:5px; display:inline-flex; align-items:center; gap:4px;}
+  .up{color:var(--good);} .down{color:var(--bad);}
+  .kpi.small .value{font-size:16px;}
+  .kpi.small .label{font-size:10.5px;}
+
+  .row{display:grid; gap:14px; margin-bottom:14px;}
+  .row.g2{grid-template-columns:1.4fr 1fr;}
+  .row.g3{grid-template-columns:1fr 1fr 1fr;}
+  .row.g4{grid-template-columns:repeat(4,1fr);}
+  @media(max-width:960px){.row.g2,.row.g3,.row.g4{grid-template-columns:1fr;}}
+
+  .card{padding:20px 22px;}
+  .card h3{font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px;}
+  .card h3 i{color:var(--gold); font-size:13px;}
+  .card .sub{font-size:11px; color:var(--muted); margin-top:2px; margin-bottom:14px;}
+
+  /* map card */
+  .map-wrap{display:flex; gap:18px; align-items:center;}
+  .map-svg{flex:1;}
+  .map-legend{width:190px; font-size:11.5px;}
+  .map-legend .row2{display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px dashed var(--line);}
+  .map-legend .row2 b{color:var(--navy);}
+  .gdot{fill:var(--gold); stroke:#fff; stroke-width:2; cursor:pointer;}
+  .gdot.big{fill:var(--navy);}
+
+  /* AI insight cards */
+  .ai-card{padding:18px 20px; display:flex; gap:14px; align-items:flex-start;}
+  .ai-card .aic-icon{width:42px; height:42px; min-width:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px;}
+  .ai-card h4{font-size:13px; font-weight:700; margin-bottom:4px;}
+  .ai-card .big{font-family:'Cairo',sans-serif; font-size:19px; font-weight:800; margin:2px 0;}
+  .ai-card p{font-size:11.5px; color:var(--muted); line-height:1.7;}
+
+  /* sector cards */
+  .sector{padding:18px 20px;}
+  .sector .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .sector .top .ic{width:38px; height:38px; border-radius:10px; background:var(--cream); display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--navy);}
+  .sector .stat{display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--line);}
+  .sector .stat:last-child{border-bottom:none;}
+  .sector .stat b{color:var(--navy); font-family:'Cairo',sans-serif;}
+
+  /* footer with QR */
+  .footcard{padding:22px 26px; display:flex; justify-content:space-between; align-items:center; margin-top:6px; flex-wrap:wrap; gap:16px;}
+  #qrcode{background:#fff; padding:8px; border-radius:10px;}
+  .footcard .qrtext{font-size:11px; color:var(--muted); text-align:center; margin-top:6px;}
+  .footcard .contact{font-size:11.5px; color:var(--navy); line-height:1.9; text-align:left;}
+</style>
+</head>
+<body>
+<div class="heritage-bg"></div>
+<div class="shell">
+  <main>
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="left">
+        <span class="item"><i class="fa-regular fa-clock"></i> آخر تحديث: اليوم، 09:41 ص</span>
+        <span class="item"><i class="fa-regular fa-calendar"></i>
+          <select><option>اليوم</option><option selected>الشهر</option><option>الأسبوع</option><option>السنة</option></select>
+        </span>
+        <span class="item"><i class="fa-solid fa-location-dot"></i>
+          <select><option selected>كل المحافظات</option><option>مسقط</option><option>الداخلية</option><option>ظفار</option><option>البريمي</option></select>
+        </span>
+        <span class="item"><i class="fa-solid fa-globe"></i>
+          <select><option selected>العربية</option><option>English</option></select>
+        </span>
+      </div>
+      <div class="right">
+        <div class="icon-btn"><i class="fa-regular fa-bell"></i><span class="badge"></span></div>
+        <div class="icon-btn"><i class="fa-solid fa-gear"></i></div>
+        <div class="avatar">س.ع</div>
+      </div>
+    </div>
+
+    <div class="pagehead">
+      <div>
+        <h1>نظرة عامة على منصة ترحال</h1>
+        <div class="date">لوحة تحكم تفاعلية — بيانات افتراضية للعرض</div>
+      </div>
+      <div class="range"><span>أسبوع</span><span class="on">شهر</span><span>سنة</span></div>
+    </div>
+
+    <!-- MAIN KPIs -->
+    <div class="kpis">
+      <div class="kpi glass">
+        <div class="icon" style="background:#EFE9FB; color:var(--navy-3);"><i class="fa-solid fa-users"></i></div>
+        <div class="label">إجمالي الزوار</div>
+        <div class="value">48,230</div>
+        <div class="delta up"><i class="fa-solid fa-arrow-up"></i> 12.4%</div>
+      </div>
+      <div class="kpi glass">
+        <div class="icon" style="background:#FBF0DC; color:#A97E2F;"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="label">الحجوزات المكتملة</div>
+        <div class="value">6,102</div>
+        <div class="delta up"><i class="fa-solid fa-arrow-up"></i> 8.1%</div>
+      </div>
+      <div class="kpi glass">
+        <div class="icon" style="background:#E7F3EC; color:var(--good);"><i class="fa-solid fa-wallet"></i></div>
+        <div class="label">إجمالي الإيرادات (ر.ع)</div>
+        <div class="value">312,450</div>
+        <div class="delta up"><i class="fa-solid fa-arrow-up"></i> 19.6%</div>
+      </div>
+      <div class="kpi glass">
+        <div class="icon" style="background:#FBEAE5; color:var(--bad);"><i class="fa-solid fa-star"></i></div>
+        <div class="label">رضا المستفيدين</div>
+        <div class="value">4.6/5</div>
+        <div class="delta down"><i class="fa-solid fa-arrow-down"></i> 0.1</div>
+      </div>
+    </div>
+
+    <!-- SECONDARY KPIs -->
+    <div class="kpis sub">
+      <div class="kpi small glass"><div class="icon" style="background:#EFE9FB;color:var(--navy-3);"><i class="fa-solid fa-hotel"></i></div><div class="label">إشغال الفنادق</div><div class="value">71%</div></div>
+      <div class="kpi small glass"><div class="icon" style="background:#FBF0DC;color:#A97E2F;"><i class="fa-solid fa-plane-arrival"></i></div><div class="label">القادمون جوًا</div><div class="value">14.2K</div></div>
+      <div class="kpi small glass"><div class="icon" style="background:#E7F3EC;color:var(--good);"><i class="fa-solid fa-ship"></i></div><div class="label">الرحلات البحرية</div><div class="value">3,410</div></div>
+      <div class="kpi small glass"><div class="icon" style="background:#FBEAE5;color:var(--bad);"><i class="fa-solid fa-earth-africa"></i></div><div class="label">أكثر جنسية زيارة</div><div class="value" style="font-size:14px">الإمارات</div></div>
+      <div class="kpi small glass"><div class="icon" style="background:#EFE9FB;color:var(--navy-3);"><i class="fa-solid fa-bag-shopping"></i></div><div class="label">الإنفاق السياحي</div><div class="value" style="font-size:15px">186 ر.ع</div></div>
+      <div class="kpi small glass"><div class="icon" style="background:#E7F3EC;color:var(--good);"><i class="fa-solid fa-leaf"></i></div><div class="label">مؤشر الاستدامة</div><div class="value">B+</div></div>
+    </div>
+
+    <!-- MAP -->
+    <div class="row" style="grid-template-columns:1fr;">
+      <div class="card glass">
+        <h3><i class="fa-solid fa-map-location-dot"></i> توزيع الزوار على المحافظات</h3>
+        <div class="sub">خريطة توضيحية مبسّطة — ليست بمقياس جغرافي دقيق</div>
+        <div class="map-wrap">
+          <svg class="map-svg" viewBox="0 0 520 260" width="100%" height="230">
+            <path d="M40 210 L60 120 L110 70 L180 45 L260 40 L340 55 L410 75 L460 110 L480 160 L460 210 L400 235 L320 245 L240 240 L160 235 L90 225 Z"
+                  fill="#EFE7D3" stroke="#D8CBA6" stroke-width="2"/>
+            <circle class="gdot big" cx="150" cy="150" r="9"></circle>
+            <text x="150" y="176" font-size="10" fill="#241B45" text-anchor="middle">مسقط</text>
+            <circle class="gdot" cx="230" cy="120" r="7"></circle>
+            <text x="230" y="106" font-size="10" fill="#241B45" text-anchor="middle">الداخلية</text>
+            <circle class="gdot" cx="320" cy="150" r="6"></circle>
+            <text x="320" y="176" font-size="10" fill="#241B45" text-anchor="middle">الشرقية</text>
+            <circle class="gdot" cx="120" cy="95" r="5"></circle>
+            <text x="120" y="82" font-size="10" fill="#241B45" text-anchor="middle">الباطنة</text>
+            <circle class="gdot" cx="400" cy="130" r="5"></circle>
+            <text x="400" y="116" font-size="10" fill="#241B45" text-anchor="middle">الظاهرة</text>
+            <circle class="gdot" cx="260" cy="205" r="8"></circle>
+            <text x="260" y="228" font-size="10" fill="#241B45" text-anchor="middle">ظفار</text>
+          </svg>
+          <div class="map-legend">
+            <div class="row2"><span>مسقط</span><b>19.4K زائر</b></div>
+            <div class="row2"><span>ظفار</span><b>11.1K زائر</b></div>
+            <div class="row2"><span>الداخلية</span><b>8.7K زائر</b></div>
+            <div class="row2"><span>الشرقية</span><b>4.9K زائر</b></div>
+            <div class="row2"><span>الباطنة</span><b>2.6K زائر</b></div>
+            <div class="row2"><span>الظاهرة</span><b>1.5K زائر</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="row g2">
+      <div class="card glass">
+        <h3><i class="fa-solid fa-chart-line"></i> حركة الزوار والحجوزات</h3>
+        <div class="sub">مقارنة شهرية آخر 8 أشهر</div>
+        <canvas id="trendChart" height="130"></canvas>
+      </div>
+      <div class="card glass">
+        <h3><i class="fa-solid fa-chart-pie"></i> مصادر الإيرادات</h3>
+        <div class="sub">حسب نوع الخدمة</div>
+        <canvas id="revenueChart" height="130"></canvas>
+      </div>
+    </div>
+
+    <!-- AI INSIGHTS -->
+    <div class="row g2">
+      <div class="ai-card glass">
+        <div class="aic-icon" style="background:#EFE9FB; color:var(--navy-3);"><i class="fa-solid fa-robot"></i></div>
+        <div>
+          <h4>توقع عدد الزوار — الأسبوع القادم</h4>
+          <div class="big">48,900 زائر <span class="up" style="font-size:12px"><i class="fa-solid fa-arrow-up"></i> 7%</span></div>
+          <p>توقّع مبني على نمط الحجوزات الحالي وموسمية الأعوام السابقة.</p>
+        </div>
+      </div>
+      <div class="ai-card glass">
+        <div class="aic-icon" style="background:#FBEAE5; color:var(--bad);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+          <h4>تنبيه ذكي</h4>
+          <div class="big" style="font-size:15px;">ارتفاع الطلب على نزوى</div>
+          <p>توقع ازدحام خلال عطلة نهاية الأسبوع — يُنصح بتوزيع الحملات الترويجية على وجهات بديلة.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTORS -->
+    <div class="row g4">
+      <div class="sector card glass">
+        <div class="top"><span style="font-weight:700; font-size:13px;">الفنادق</span><div class="ic"><i class="fa-solid fa-hotel"></i></div></div>
+        <div class="stat"><span>نسبة الإشغال</span><b>71%</b></div>
+        <div class="stat"><span>متوسط السعر</span><b>42 ر.ع</b></div>
+        <div class="stat"><span>عدد الشركاء</span><b>238</b></div>
+      </div>
+      <div class="sector card glass">
+        <div class="top"><span style="font-weight:700; font-size:13px;">الحرفيون</span><div class="ic"><i class="fa-solid fa-hands-bubbles"></i></div></div>
+        <div class="stat"><span>حرفيون مسجّلون</span><b>1,284</b></div>
+        <div class="stat"><span>مبيعات الشهر</span><b>18.7K ر.ع</b></div>
+        <div class="stat"><span>نمو المبيعات</span><b>▲ 22%</b></div>
+      </div>
+      <div class="sector card glass">
+        <div class="top"><span style="font-weight:700; font-size:13px;">الفعاليات</span><div class="ic"><i class="fa-solid fa-masks-theater"></i></div></div>
+        <div class="stat"><span>فعاليات نشطة</span><b>16</b></div>
+        <div class="stat"><span>تذاكر مباعة</span><b>3,920</b></div>
+        <div class="stat"><span>أعلى فعالية</span><b>مهرجان صلالة</b></div>
+      </div>
+      <div class="sector card glass">
+        <div class="top"><span style="font-weight:700; font-size:13px;">المدفوعات</span><div class="ic"><i class="fa-solid fa-credit-card"></i></div></div>
+        <div class="stat"><span>معاملات Open Banking</span><b>9,340</b></div>
+        <div class="stat"><span>قيمة المعاملات</span><b>96.2K ر.ع</b></div>
+        <div class="stat"><span>معدل نجاح الدفع</span><b>99.2%</b></div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footcard glass">
+      <div>
+        <div id="qrcode"></div>
+        <div class="qrtext">امسح لفتح النسخة التفاعلية</div>
+      </div>
+      <div class="contact">
+        <b style="font-family:'Cairo',sans-serif;">سهام عمر الشيبانية</b><br>
+        وزارة التراث والسياحة — سلطنة عُمان<br>
+        terhal.om &middot; info@terhal.om
+      </div>
+    </div>
+  </main>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="arch">✦</div>
+      <div>
+        <div class="brand-text">ترحال</div>
+        <div class="brand-sub">TERHAL</div>
+      </div>
+    </div>
+    <div class="tagline">رحلتك في عُمان... تبدأ من هنا<br>منصة رقمية موحّدة لقطاع التراث والسياحة</div>
+    <nav>
+      <div class="navitem active"><i class="fa-solid fa-house"></i> الرئيسية</div>
+      <div class="navitem"><i class="fa-solid fa-chart-simple"></i> المؤشرات</div>
+      <div class="navitem"><i class="fa-solid fa-map-location-dot"></i> الخرائط</div>
+      <div class="navitem"><i class="fa-solid fa-hotel"></i> الفنادق</div>
+      <div class="navitem"><i class="fa-solid fa-hands-bubbles"></i> الحرفيون</div>
+      <div class="navitem"><i class="fa-solid fa-credit-card"></i> المدفوعات</div>
+      <div class="navitem"><i class="fa-solid fa-gear"></i> الإعدادات</div>
+    </nav>
+    <div class="side-foot">وزارة التراث والسياحة<br>سلطنة عُمان — رؤية عُمان 2040</div>
+  </aside>
+</div>
+
+<script>
+  // Trend chart
+  new Chart(document.getElementById('trendChart').getContext('2d'), {
+    type:'line',
+    data:{
+      labels:['ديسمبر','يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو'],
+      datasets:[
+        { label:'الزوار', data:[28,31,35,33,38,41,44,48], borderColor:'#1E1548', backgroundColor:'rgba(30,21,72,0.06)', tension:.4, fill:true, pointRadius:0, borderWidth:2.5 },
+        { label:'الحجوزات', data:[9,10,12,11,13,14,15,17], borderColor:'#C9A15A', backgroundColor:'rgba(201,161,90,0.08)', tension:.4, fill:true, pointRadius:0, borderWidth:2.5 }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'top', align:'end', labels:{boxWidth:8, boxHeight:8, usePointStyle:true, font:{family:'Tajawal', size:11}}}},
+      scales:{
+        y:{ grid:{color:'#ECE6D8'}, ticks:{font:{family:'Tajawal', size:10}, callback:v=>v+'K'} },
+        x:{ grid:{display:false}, ticks:{font:{family:'Tajawal', size:10}} }
+      }
+    }
+  });
+
+  // Revenue donut
+  new Chart(document.getElementById('revenueChart').getContext('2d'), {
+    type:'doughnut',
+    data:{
+      labels:['الفنادق والإقامة','الحجوزات والتذاكر','سوق الحرفيين','الفعاليات'],
+      datasets:[{ data:[42,28,18,12], backgroundColor:['#1E1548','#3B2C7A','#C9A15A','#E9CE93'], borderWidth:3, borderColor:'#fff' }]
+    },
+    options:{
+      plugins:{ legend:{position:'bottom', labels:{boxWidth:8, boxHeight:8, usePointStyle:true, font:{family:'Tajawal', size:10.5}, padding:12}} },
+      cutout:'62%'
+    }
+  });
+
+  // QR code
+  new QRCode(document.getElementById("qrcode"), {
+    text: "https://terhal.om/dashboard",
+    width: 96,
+    height: 96,
+    colorDark: "#1E1548",
+    colorLight: "#ffffff"
+  });
+</script>
+</body>
+</html>
